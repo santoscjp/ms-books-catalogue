@@ -1,6 +1,9 @@
 package com.grupo5.ms_books_catalogue.controller;
 
+import java.util.List;
+
 import com.grupo5.ms_books_catalogue.payload.ApiResponse;
+import com.grupo5.ms_books_catalogue.payload.BookFilter;
 import com.grupo5.ms_books_catalogue.payload.BookRequest;
 import com.grupo5.ms_books_catalogue.payload.BookResponse;
 import com.grupo5.ms_books_catalogue.service.BookService;
@@ -12,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/api/v1/book")
+@RequestMapping("/api/v1/books")
 @Validated
 public class BookController {
 
@@ -22,16 +25,22 @@ public class BookController {
         this.bookService = bookService;
     }
 
-    @GetMapping("all")
-    public ResponseEntity<ApiResponse<Page<BookResponse>>> list(
+    @GetMapping("/all")
+    public  ResponseEntity<ApiResponse<List<BookResponse>>>  list(
             @RequestParam(defaultValue="0") int page,
             @RequestParam(defaultValue="10") int size
     ) {
         Page<BookResponse> result = bookService.list(PageRequest.of(page, size))
                 .map(BookResponse::new);
-        return ResponseEntity.ok(
-                new ApiResponse<>(200,"SUCCESS" ,"Books retrieved", result)
+
+        List<BookResponse> content = result.getContent();
+        ApiResponse<List<BookResponse>> resp = new ApiResponse<>(
+                HttpStatus.OK.value(),
+                "SUCCESS",
+                "Books search results",
+                content
         );
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{id}")
@@ -42,6 +51,24 @@ public class BookController {
         return ResponseEntity.ok(
                 new ApiResponse<>(200, "SUCCESS","Book found", r)
         );
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<BookResponse>>> search(
+            @ModelAttribute BookFilter filter,
+            @RequestParam(defaultValue="0") int page,
+            @RequestParam(defaultValue="10") int size
+    ) {
+        Page<BookResponse> pageResult = bookService.search(filter, PageRequest.of(page, size))
+                .map(BookResponse::new);
+        List<BookResponse> content = pageResult.getContent();
+        ApiResponse<List<BookResponse>> resp = new ApiResponse<>(
+                HttpStatus.OK.value(),
+                "SUCCESS",
+                "Books search results",
+                content
+        );
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/create")

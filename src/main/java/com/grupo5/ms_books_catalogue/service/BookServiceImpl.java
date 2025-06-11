@@ -2,8 +2,10 @@ package com.grupo5.ms_books_catalogue.service;
 
 import com.grupo5.ms_books_catalogue.entity.Book;
 import com.grupo5.ms_books_catalogue.exception.ResourceNotFoundException;
+import com.grupo5.ms_books_catalogue.payload.BookFilter;
 import com.grupo5.ms_books_catalogue.payload.BookRequest;
 import com.grupo5.ms_books_catalogue.repository.BookRepository;
+import com.grupo5.ms_books_catalogue.utils.BookSpecs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,11 @@ public class BookServiceImpl implements BookService {
         Book existing = getById(id);
         applyUpdates(existing, req);
         return bookRepository.save(existing);
+    }
+
+    @Override
+    public Page<Book> search(BookFilter filter, Pageable page) {
+        return bookRepository.findAll(BookSpecs.withFilter(filter), page);
     }
 
     @Override

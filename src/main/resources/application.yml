@@ -1,9 +1,13 @@
 spring:
+  application:
+    name: ms-books-catalogue
+
   datasource:
     url: jdbc:h2:mem:catalogue-db
     driverClassName: org.h2.Driver
     username: sa
     password:
+
   jpa:
     hibernate:
       ddl-auto: none
@@ -11,3 +15,18 @@ spring:
   sql:
     init:
       schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+server:
+  port: 8081
+
+# Eureka Client Settings
+eureka:
+  instance:
+    preferIpAddress: true
+    hostname: ms-books-catalogue
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+    register-with-eureka: true
+    fetch-registry: true
