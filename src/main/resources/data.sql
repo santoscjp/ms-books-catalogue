@@ -18,5 +18,5 @@ VALUES ('978-0-7432-7356-5', 'Angels & Demons', 'Dan Brown', '2000-05-01', 'Thri
        ('978-0-385-52724-7', 'The Help', 'Kathryn Stockett', '2009-02-10', 'Historical Fiction', 4, TRUE, 10),
        ('978-0-451-52493-5', 'Fahrenheit 451', 'Ray Bradbury', '1953-10-19', 'Dystopian', 5, TRUE, 19),
        ('978-0-385-50445-1', 'Unbroken', 'Laura Hillenbrand', '2010-11-16', 'Biography', 5, TRUE, 3),
-       ('978-0-06-231611-0', 'The Alchemist', 'Paulo Coelho', '1988-05-01', 'Philosophical Fiction', 4, TRUE, 16),
-       ('978-0-345-39180-3', 'The Martian', 'Andy Weir', '2011-09-27', 'Science Fiction', 4, TRUE, 9);
+       ('978-0-06-231611-0', 'The Alchemist', 'Paulo Coelho', '1988-05-01', 'Philosophical Fiction', 4, FALSE, 16),
+       ('978-0-345-39180-3', 'The Martian', 'Andy Weir', '2011-09-27', 'Science Fiction', 4, FALSE, 9);

@@ -21,7 +21,9 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Page<Book> list(Pageable page) {
-        return bookRepository.findAll(page);
+        BookFilter filter = new BookFilter();
+        filter.setVisible(true);
+        return bookRepository.findAll(BookSpecs.withFilter(filter), page);
     }
 
     @Override
