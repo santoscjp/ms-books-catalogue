@@ -8,7 +8,7 @@ import java.time.LocalDate;
 @lombok.Setter
 @lombok.AllArgsConstructor
 public class BookResponse {
-    private Long id;
+    private String id;
     private String isbn;
     private String title;
     private String author;
@@ -17,6 +17,7 @@ public class BookResponse {
     private Integer rating;
     private Boolean visible;
     private Integer stock;
+    private String description;
 
     public BookResponse(Book book) {
         this.id               = book.getId();
@@ -28,5 +29,6 @@ public class BookResponse {
         this.rating           = book.getRating();
         this.visible          = book.getVisible();
         this.stock            = book.getStock();
+        this.description      = book.getDescription();
     }
 }

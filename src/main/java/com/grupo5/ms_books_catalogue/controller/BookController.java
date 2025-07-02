@@ -1,14 +1,11 @@
 package com.grupo5.ms_books_catalogue.controller;
 
-import java.util.List;
+import java.util.Map;
 
-import com.grupo5.ms_books_catalogue.payload.ApiResponse;
-import com.grupo5.ms_books_catalogue.payload.BookFilter;
-import com.grupo5.ms_books_catalogue.payload.BookRequest;
-import com.grupo5.ms_books_catalogue.payload.BookResponse;
+import com.grupo5.ms_books_catalogue.payload.*;
 import com.grupo5.ms_books_catalogue.service.BookService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/books")
 @Validated
+@Slf4j
 public class BookController {
 
     private final BookService bookService;
@@ -25,27 +23,9 @@ public class BookController {
         this.bookService = bookService;
     }
 
-    @GetMapping("/all")
-    public  ResponseEntity<ApiResponse<List<BookResponse>>>  list(
-            @RequestParam(defaultValue="0") int page,
-            @RequestParam(defaultValue="10") int size
-    ) {
-        Page<BookResponse> result = bookService.list(PageRequest.of(page, size))
-                .map(BookResponse::new);
-
-        List<BookResponse> content = result.getContent();
-        ApiResponse<List<BookResponse>> resp = new ApiResponse<>(
-                HttpStatus.OK.value(),
-                "SUCCESS",
-                "Books search results",
-                content
-        );
-        return ResponseEntity.ok(resp);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BookResponse>> get(
-            @PathVariable Long id
+            @PathVariable String id
     ) {
         BookResponse r = new BookResponse(bookService.getById(id));
         return ResponseEntity.ok(
@@ -54,19 +34,22 @@ public class BookController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<List<BookResponse>>> search(
-            @ModelAttribute BookFilter filter,
-            @RequestParam(defaultValue="0") int page,
-            @RequestParam(defaultValue="10") int size
+    public ResponseEntity<ApiResponse<BookQueryResponse>> search(
+            @RequestHeader Map<String, String> headers,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String isbn,
+            @RequestParam(required = false) String description
     ) {
-        Page<BookResponse> pageResult = bookService.search(filter, PageRequest.of(page, size))
-                .map(BookResponse::new);
-        List<BookResponse> content = pageResult.getContent();
-        ApiResponse<List<BookResponse>> resp = new ApiResponse<>(
+        log.info("headers: {}", headers);
+        BookQueryResponse pageResult = bookService.search(title, author, category, isbn, description);
+
+        ApiResponse<BookQueryResponse> resp = new ApiResponse<>(
                 HttpStatus.OK.value(),
                 "SUCCESS",
                 "Books search results",
-                content
+                pageResult
         );
         return ResponseEntity.ok(resp);
     }
@@ -82,7 +65,7 @@ public class BookController {
 
     @PutMapping("/update/{id}")
     public ResponseEntity<ApiResponse<BookResponse>> update(
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody BookRequest req
     ) {
         BookResponse r = new BookResponse(bookService.update(id, req));
@@ -93,9 +76,9 @@ public class BookController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(
-            @PathVariable Long id
+            @PathVariable String id
     ) {
-        bookService.softDelete(id);
+        bookService.delete(id);
         return ResponseEntity.ok(
                 new ApiResponse<>(200,"SUCCESS", "Book marked as invisible", null)
         );

@@ -22,6 +22,9 @@ public class BookRequest {
     @Size(max=255)
     private String author;
 
+    @Size(max=255)
+    private String description;
+
     @PastOrPresent
     private LocalDate publicationDate;
 
