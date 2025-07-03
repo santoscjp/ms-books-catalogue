@@ -7,6 +7,8 @@ import com.grupo5.ms_books_catalogue.payload.BookRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface BookService {
     Book getById(String id);
     Book create(BookRequest request);
@@ -17,4 +19,7 @@ public interface BookService {
                              String isbn,
                              String description);
     Boolean delete(String id);
+    List<BookRequest> fullTextSearch(String query);
+    List<String> suggest(String prefix);
+    List<String> correct(String word);
 }

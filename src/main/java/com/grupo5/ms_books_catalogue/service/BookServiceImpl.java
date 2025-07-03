@@ -1,14 +1,31 @@
 package com.grupo5.ms_books_catalogue.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule; // <-- Añadir
+import com.fasterxml.jackson.databind.SerializationFeature;  // <-- Añadir
 import com.grupo5.ms_books_catalogue.entity.Book;
 import com.grupo5.ms_books_catalogue.payload.BookQueryResponse;
 import com.grupo5.ms_books_catalogue.payload.BookRequest;
+import com.grupo5.ms_books_catalogue.payload.BookResponse;
 import com.grupo5.ms_books_catalogue.repository.BookRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchPhrasePrefixQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.suggest.Suggest;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
+import org.elasticsearch.search.suggest.term.TermSuggestionBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -18,12 +35,20 @@ import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
 
     private final BookRepository repository;
     private final ElasticsearchOperations elasticsearchClient;
+    private final RestHighLevelClient client;  // <--- inyecta el cliente aquí
+
     private final String[] titleSearchFields = {"title", "title._2gram", "title._3gram"};
     private final String[] authorSearchFields = {"author", "author._2gram", "author._3gram"};
 
@@ -69,7 +94,6 @@ public class BookServiceImpl implements BookService {
 
         return new BookQueryResponse(result.getSearchHits().stream().map(SearchHit::getContent).toList());
     }
-
 
     @Override
     public Book getById(String productId) {
@@ -163,5 +187,100 @@ public class BookServiceImpl implements BookService {
         b.setVisible(r.getVisible());
         b.setStock(r.getStock());
     }
-}
 
+    @Override
+    public List<BookRequest> fullTextSearch(String query) {
+        SearchRequest searchRequest = new SearchRequest("books");
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+
+        MultiMatchQueryBuilder multiMatchQuery = QueryBuilders
+                .multiMatchQuery(query, "title", "author", "description")
+                .fuzziness(org.elasticsearch.common.unit.Fuzziness.AUTO)
+                .type(MultiMatchQueryBuilder.Type.BEST_FIELDS);
+
+        sourceBuilder.query(multiMatchQuery);
+        searchRequest.source(sourceBuilder);
+
+        try {
+            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            return Arrays.stream(response.getHits().getHits())
+                    .map(hit -> {
+                        try {
+                            return objectMapper.readValue(hit.getSourceAsString(), BookRequest.class);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }).toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<String> suggest(String prefix) {
+        SearchRequest searchRequest = new SearchRequest("books");
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+
+        // Usar match_phrase_prefix sobre el campo 'title' tipo 'search_as_you_type'
+        MatchPhrasePrefixQueryBuilder matchQuery = QueryBuilders
+                .matchPhrasePrefixQuery("title", prefix);
+
+        sourceBuilder.query(matchQuery);
+        sourceBuilder.size(5); // limitar resultados
+        searchRequest.source(sourceBuilder);
+
+        try {
+            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+            List<String> results = new ArrayList<>();
+
+            response.getHits().forEach(hit -> {
+                Map<String, Object> sourceAsMap = hit.getSourceAsMap();
+                Object titleObj = sourceAsMap.get("title");
+                if (titleObj != null) {
+                    results.add(titleObj.toString());
+                }
+            });
+
+            return results;
+        } catch (IOException e) {
+            throw new RuntimeException("Error executing suggest query", e);
+        }
+    }
+
+
+    @Override
+    public List<String> correct(String word) {
+        SearchRequest searchRequest = new SearchRequest("books");
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+
+        TermSuggestionBuilder suggestionBuilder = SuggestBuilders
+                .termSuggestion("title")
+                .text(word)
+                .suggestMode(TermSuggestionBuilder.SuggestMode.ALWAYS);
+
+        SuggestBuilder suggestBuilder = new SuggestBuilder();
+        suggestBuilder.addSuggestion("spellcheck", suggestionBuilder);
+
+        sourceBuilder.suggest(suggestBuilder);
+        searchRequest.source(sourceBuilder);
+
+        try {
+            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+            Suggest.Suggestion<? extends Suggest.Suggestion.Entry<? extends Suggest.Suggestion.Entry.Option>> suggestion =
+                    response.getSuggest().getSuggestion("spellcheck");
+
+            List<String> results = new ArrayList<>();
+            for (var entry : suggestion.getEntries()) {
+                for (var option : entry.getOptions()) {
+                    results.add(option.getText().string());
+                }
+            }
+            return results;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}

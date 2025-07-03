@@ -20,27 +20,31 @@ import org.springframework.data.elasticsearch.repository.config.EnableElasticsea
 @Configuration
 @EnableElasticsearchRepositories(basePackages = "com.grupo5.ms_books_catalogue.entity")
 public class ElasticSearchConfig {
+
     @Value("${ELASTICSEARCH_HOST}")
     private String clusterEndpoint;
-    @Value ("${ELASTICSEARCH_USER}")
+
+    @Value("${ELASTICSEARCH_USER}")
     private String username;
+
     @Value("${ELASTICSEARCH_PWD}")
     private String password;
 
     @Bean
-    public ElasticsearchOperations elasticsearchTemplate() {
+    public RestHighLevelClient restHighLevelClient() {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials (AuthScope.ANY,
+        credentialsProvider.setCredentials(AuthScope.ANY,
                 new UsernamePasswordCredentials(username, password));
 
-        return new ElasticsearchRestTemplate(
-                new RestHighLevelClient(RestClient.builder(new HttpHost(clusterEndpoint, 443, "https"))
-                        .setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
-                                                         @Override
-                                                         public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-                                                             return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                                                         }
-                                                     })));
+        return new RestHighLevelClient(
+                RestClient.builder(new HttpHost(clusterEndpoint, 443, "https"))
+                        .setHttpClientConfigCallback(httpClientBuilder ->
+                                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider))
+        );
+    }
 
+    @Bean
+    public ElasticsearchOperations elasticsearchTemplate() {
+        return new ElasticsearchRestTemplate(restHighLevelClient());
     }
 }

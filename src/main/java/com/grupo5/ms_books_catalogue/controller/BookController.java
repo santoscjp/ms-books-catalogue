@@ -83,4 +83,28 @@ public class BookController {
                 new ApiResponse<>(200,"SUCCESS", "Book marked as invisible", null)
         );
     }
+
+    @GetMapping("/fulltext")
+    public ResponseEntity<ApiResponse<?>> fullTextSearch(@RequestParam String q) {
+        return ResponseEntity.ok(
+                new ApiResponse<>(200, "SUCCESS", "Full-text search result",
+                        bookService.fullTextSearch(q))
+        );
+    }
+
+    @GetMapping("/suggest")
+    public ResponseEntity<ApiResponse<?>> suggest(@RequestParam String q) {
+        return ResponseEntity.ok(
+                new ApiResponse<>(200, "SUCCESS", "Autocomplete suggestions",
+                        bookService.suggest(q))
+        );
+    }
+
+    @GetMapping("/correct")
+    public ResponseEntity<ApiResponse<?>> correct(@RequestParam String q) {
+        return ResponseEntity.ok(
+                new ApiResponse<>(200, "SUCCESS", "Spellcheck suggestions",
+                        bookService.correct(q))
+        );
+    }
 }
