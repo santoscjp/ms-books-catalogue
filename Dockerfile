@@ -8,4 +8,4 @@ COPY --from=build /target/ms-books-catalogue-0.0.1-SNAPSHOT.jar app.jar
 
 LABEL authors="Grupo5"
 
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "--add-opens=java.base/java.math=ALL-UNNAMED", "-jar", "/app.jar"]

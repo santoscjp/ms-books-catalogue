@@ -2,6 +2,7 @@ package com.grupo5.ms_books_catalogue.payload;
 
 import com.grupo5.ms_books_catalogue.entity.Book;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @lombok.Getter
@@ -18,6 +19,8 @@ public class BookResponse {
     private Boolean visible;
     private Integer stock;
     private String description;
+    private BigDecimal price;
+    private BigDecimal discount;
 
     public BookResponse(Book book) {
         this.id               = book.getId();
@@ -30,5 +33,8 @@ public class BookResponse {
         this.visible          = book.getVisible();
         this.stock            = book.getStock();
         this.description      = book.getDescription();
+        this.price            =book.getPrice();
+        this.discount         =book.getDiscount();
+
     }
 }

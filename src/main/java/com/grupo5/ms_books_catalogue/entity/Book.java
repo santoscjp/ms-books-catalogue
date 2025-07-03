@@ -4,6 +4,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -43,4 +44,10 @@ public class Book {
 
     @Field(type = FieldType.Integer)
     private Integer stock = 0;
+
+    @Field(type = FieldType.Double)
+    private BigDecimal price;
+
+    @Field(type = FieldType.Double)
+    private BigDecimal discount;
 }

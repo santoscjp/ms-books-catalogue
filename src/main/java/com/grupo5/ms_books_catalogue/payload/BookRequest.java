@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.elasticsearch.search.DocValueFormat;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -39,5 +41,11 @@ public class BookRequest {
 
     @Min(0)
     private Integer stock;
+
+    @Min(1)
+    private BigDecimal price;
+
+    @Min(0) @Max(99)
+    private BigDecimal discount;
 
 }

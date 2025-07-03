@@ -97,6 +97,8 @@ public class BookServiceImpl implements BookService {
                     .rating(request.getRating())
                     .visible(request.getVisible() != null ? request.getVisible() : true)
                     .stock(request.getStock() != null ? request.getStock() : 0)
+                    .price(request.getPrice())
+                    .discount(request.getDiscount())
                     .build();
 
             return repository.save(book);
@@ -119,6 +121,8 @@ public class BookServiceImpl implements BookService {
             book.setVisible(req.getVisible());
             book.setStock(req.getStock());
             book.setPublicationDate(req.getPublicationDate());
+            book.setPrice(req.getPrice());
+            book.setDiscount(req.getDiscount());
             return repository.save(book);
         }
         return null;
